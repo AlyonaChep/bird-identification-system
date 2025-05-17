@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtGui import QPixmap, QImage
 from PyQt5.QtCore import Qt
+from gui.static_image_viewer import StaticImageViewer
 import cv2
 
 
@@ -43,13 +44,8 @@ class MainWindow(QWidget):
     def open_image(self):
         file_path, _ = QFileDialog.getOpenFileName(self, "Pick an image", "", "Images (*.png *.jpg *.jpeg)")
         if file_path:
-            image = cv2.imread(file_path)
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            height, width, channel = image.shape
-            bytes_per_line = 3 * width
-            q_image = QImage(image.data, width, height, bytes_per_line, QImage.Format_RGB888)
-            pixmap = QPixmap.fromImage(q_image)
-            self.image_label.setPixmap(pixmap.scaled(self.image_label.size(), Qt.KeepAspectRatio))
+            self.viewer = StaticImageViewer(file_path)
+            self.viewer.show()
 
     def open_video(self):
         file_path, _ = QFileDialog.getOpenFileName(self, "Pick a video", "", "Videos (*.mp4 *.avi)")
@@ -58,7 +54,7 @@ class MainWindow(QWidget):
             # Тут буде логіка обробки відео
 
     def open_camera(self):
-        print("Loading camera ...")
+        print("Loading ....")
         # Тут буде логіка для обробки потоку з камери
 
 
