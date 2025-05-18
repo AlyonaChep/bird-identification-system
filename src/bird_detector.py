@@ -5,7 +5,7 @@ import cv2
 model = YOLO('../model/yolov8n.pt')  # або 'yolov8s.pt' для більш точного
 
 def detect_birds(frame):
-    results = model(frame)[0]
+    results = model(frame, verbose=False)[0]
     boxes = []
 
     # Збираємо координати пташок, якщо вони були знайдені

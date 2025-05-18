@@ -18,7 +18,7 @@ def classify_bird(bird_image):
     bird_image_resized = bird_image_resized / 255.0  # нормалізація до [0, 1]
 
     # Передбачення
-    predictions = classification_model.predict(bird_image_resized)
+    predictions = classification_model.predict(bird_image_resized, verbose=0)
     predicted_index = int(np.argmax(predictions))
     predicted_class = index_to_class[str(predicted_index)]
     confidence = float(np.max(predictions))  # Ймовірність найбільш впевненого класу
