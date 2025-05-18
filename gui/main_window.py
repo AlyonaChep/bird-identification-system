@@ -1,13 +1,14 @@
 import sys
+import cv2
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QPushButton,
-    QLabel, QFileDialog, QHBoxLayout
+    QLabel, QFileDialog, QHBoxLayout, QMessageBox, QInputDialog
 )
-from PyQt5.QtGui import QPixmap, QImage
 from PyQt5.QtCore import Qt
+from pygrabber.dshow_graph import FilterGraph
 from gui.static_image_viewer import StaticImageViewer
 from gui.video_processor import VideoProcessorViewer
-
+from gui.camera_viewer import CameraViewer
 
 
 class MainWindow(QWidget):
@@ -56,8 +57,27 @@ class MainWindow(QWidget):
             self.video_viewer.show()
 
     def open_camera(self):
-        print("Loading ....")
-        # Тут буде логіка для обробки потоку з камери
+        graph = FilterGraph()
+        device_names = graph.get_input_devices()
+
+        if not device_names:
+            print("No camera devices found")
+            return
+
+        # Діалог вибору
+        item, ok = QInputDialog.getItem(
+            self,
+            "Select Camera",
+            "Available Cameras:",
+            device_names,
+            0,
+            False
+        )
+
+        if ok and item:
+            camera_index = device_names.index(item)
+            self.camera_viewer = CameraViewer(camera_index)
+            self.camera_viewer.show()
 
 
 if __name__ == "__main__":
