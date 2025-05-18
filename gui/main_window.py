@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtGui import QPixmap, QImage
 from PyQt5.QtCore import Qt
 from gui.static_image_viewer import StaticImageViewer
-from gui.video_processor import process_video
+from gui.video_processor import VideoProcessorViewer
 
 
 
@@ -52,7 +52,8 @@ class MainWindow(QWidget):
         file_path, _ = QFileDialog.getOpenFileName(self, "Pick a video", "", "Videos (*.mp4 *.avi)")
         if file_path:
             print("Picked video:", file_path)
-            process_video(file_path)
+            self.video_viewer = VideoProcessorViewer(file_path)
+            self.video_viewer.show()
 
     def open_camera(self):
         print("Loading ....")
