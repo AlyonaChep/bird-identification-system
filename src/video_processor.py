@@ -25,7 +25,7 @@ class VideoProcessorThread(QThread):
 
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         filename = os.path.splitext(os.path.basename(self.video_path))[0]
-        output_dir = os.path.join("snapshots", filename)
+        output_dir = os.path.join("../gui/snapshots", filename)
         os.makedirs(output_dir, exist_ok=True)
 
         frame_interval = 5  # Аналізуємо кожен N-ий кадр
@@ -98,37 +98,3 @@ class VideoProcessorThread(QThread):
         summary = {cls: len(intervals) for cls, intervals in bird_appearances.items()}
         self.summary_signal.emit(summary)
 
-
-class VideoProcessorViewer(QWidget):
-    def __init__(self, video_path):
-        super().__init__()
-        self.setWindowTitle("Video Analysis Log")
-        self.setGeometry(200, 200, 600, 400)
-
-        layout = QVBoxLayout()
-        self.log_output = QTextEdit()
-        self.log_output.setReadOnly(True)
-        self.progress_bar = QProgressBar()
-        self.progress_bar.setValue(0)
-
-        layout.addWidget(QLabel(f"Analyzing: {os.path.basename(video_path)}"))
-        layout.addWidget(self.progress_bar)
-        layout.addWidget(self.log_output)
-        self.setLayout(layout)
-
-        self.worker = VideoProcessorThread(video_path)
-        self.worker.log_signal.connect(self.append_log)
-        self.worker.summary_signal.connect(self.display_summary)
-        self.worker.progress_signal.connect(self.update_progress)
-        self.worker.start()
-
-    def append_log(self, text):
-        self.log_output.append(text)
-
-    def display_summary(self, sightings):
-        self.log_output.append("\nSummary:")
-        for bird, count in sightings.items():
-            self.log_output.append(f"- {bird}: {count} unique appearance(s)")
-
-    def update_progress(self, value):
-        self.progress_bar.setValue(value)

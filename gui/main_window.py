@@ -1,83 +1,50 @@
 import sys
-import cv2
 from PyQt5.QtWidgets import (
-    QApplication, QWidget, QVBoxLayout, QPushButton,
-    QLabel, QFileDialog, QHBoxLayout, QMessageBox, QInputDialog
+    QApplication, QWidget, QStackedLayout, QVBoxLayout
 )
-from PyQt5.QtCore import Qt
-from pygrabber.dshow_graph import FilterGraph
-from gui.static_image_viewer import StaticImageViewer
-from gui.video_processor import VideoProcessorViewer
-from gui.camera_viewer import CameraViewer
+from gui.home_view import HomeView
+from gui.image_view import ImageView
+from gui.video_view import VideoView
+from gui.camera_view import CameraView
 
 
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Bird Identification System")
-        self.setGeometry(100, 100, 800, 600)
+        self.setGeometry(100, 100, 900, 700)
 
         self.layout = QVBoxLayout()
+        self.stack = QStackedLayout()
 
-        # Кнопки
-        self.button_image = QPushButton("Open image")
-        self.button_video = QPushButton("Open video")
-        self.button_camera = QPushButton("Open camera")
+        # ініціалізуємо всі сторінки
+        self.home_view = HomeView(self)
+        self.image_view = ImageView(self)
+        self.video_view = VideoView(self)
+        self.camera_view = CameraView(self)
 
-        self.button_image.clicked.connect(self.open_image)
-        self.button_video.clicked.connect(self.open_video)
-        self.button_camera.clicked.connect(self.open_camera)
+        # додаємо до стеку
+        self.stack.addWidget(self.home_view)
+        self.stack.addWidget(self.image_view)
+        self.stack.addWidget(self.video_view)
+        self.stack.addWidget(self.camera_view)
 
-        # Вікно для показу зображення
-        self.image_label = QLabel("Image will be here")
-        self.image_label.setAlignment(Qt.AlignCenter)
-        self.image_label.setStyleSheet("border: 1px solid black")
-
-        # Додаємо до layout
-        button_layout = QHBoxLayout()
-        button_layout.addWidget(self.button_image)
-        button_layout.addWidget(self.button_video)
-        button_layout.addWidget(self.button_camera)
-
-        self.layout.addLayout(button_layout)
-        self.layout.addWidget(self.image_label)
+        self.layout.addLayout(self.stack)
         self.setLayout(self.layout)
 
-    def open_image(self):
-        file_path, _ = QFileDialog.getOpenFileName(self, "Pick an image", "", "Images (*.png *.jpg *.jpeg)")
-        if file_path:
-            self.viewer = StaticImageViewer(file_path)
-            self.viewer.show()
+        self.show_home()
 
-    def open_video(self):
-        file_path, _ = QFileDialog.getOpenFileName(self, "Pick a video", "", "Videos (*.mp4 *.avi)")
-        if file_path:
-            print("Picked video:", file_path)
-            self.video_viewer = VideoProcessorViewer(file_path)
-            self.video_viewer.show()
+    def show_home(self):
+        self.stack.setCurrentWidget(self.home_view)
 
-    def open_camera(self):
-        graph = FilterGraph()
-        device_names = graph.get_input_devices()
+    def show_image_view(self):
+        self.stack.setCurrentWidget(self.image_view)
 
-        if not device_names:
-            print("No camera devices found")
-            return
+    def show_video_view(self):
+        self.stack.setCurrentWidget(self.video_view)
 
-        # Діалог вибору
-        item, ok = QInputDialog.getItem(
-            self,
-            "Select Camera",
-            "Available Cameras:",
-            device_names,
-            0,
-            False
-        )
-
-        if ok and item:
-            camera_index = device_names.index(item)
-            self.camera_viewer = CameraViewer(camera_index)
-            self.camera_viewer.show()
+    def show_camera_view(self):
+        self.stack.setCurrentWidget(self.camera_view)
 
 
 if __name__ == "__main__":

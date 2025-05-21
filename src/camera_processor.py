@@ -1,11 +1,9 @@
 import cv2
+import time
 from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5.QtGui import QImage
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QTextEdit
-from PyQt5.QtGui import QPixmap
 from src.bird_detector import detect_birds
 from src.frame_classifier import classify_bird
-import time
 
 
 class CameraProcessorThread(QThread):
@@ -21,7 +19,7 @@ class CameraProcessorThread(QThread):
     def run(self):
         cap = cv2.VideoCapture(self.camera_index)
         if not cap.isOpened():
-            self.log_signal.emit("Failed to access the camera")
+            self.log_signal.emit("❌ Failed to access the camera.")
             return
 
         while self.running:
@@ -34,7 +32,6 @@ class CameraProcessorThread(QThread):
                 bird_img = frame[y1:y2, x1:x2]
                 predicted_class, conf = classify_bird(bird_img)
 
-                # Простий фільтр на повторне виявлення
                 current_time = time.time()
                 seen = False
                 if predicted_class in self.last_seen:
@@ -62,42 +59,3 @@ class CameraProcessorThread(QThread):
     def stop(self):
         self.running = False
         self.wait()
-
-
-class CameraViewer(QWidget):
-    def __init__(self, camera_index=0):
-        super().__init__()
-        self.setWindowTitle("Live Camera Bird Detection")
-        self.setGeometry(200, 200, 800, 600)
-
-        self.image_label = QLabel("Starting camera...")
-        self.image_label.setStyleSheet("border: 1px solid black")
-        self.image_label.setScaledContents(True)
-
-        self.log_output = QTextEdit()
-        self.log_output.setReadOnly(True)
-        self.log_output.setPlaceholderText("Bird sightings will appear here...")
-
-        self.stop_button = QPushButton("Stop")
-        self.stop_button.clicked.connect(self.close)
-
-        layout = QVBoxLayout()
-        layout.addWidget(self.image_label)
-        layout.addWidget(self.log_output)
-        layout.addWidget(self.stop_button)
-        self.setLayout(layout)
-
-        self.worker = CameraProcessorThread(camera_index)
-        self.worker.frame_signal.connect(self.update_frame)
-        self.worker.log_signal.connect(self.append_log)
-        self.worker.start()
-
-    def update_frame(self, qt_image):
-        self.image_label.setPixmap(QPixmap.fromImage(qt_image))
-
-    def append_log(self, message):
-        self.log_output.append(message)
-
-    def closeEvent(self, event):
-        self.worker.stop()
-        event.accept()
