@@ -1,11 +1,11 @@
 import os
-from PyQt5.QtWidgets import (
-    QWidget, QVBoxLayout, QPushButton, QLabel, QFileDialog,
-    QTextEdit, QProgressBar, QHBoxLayout, QMessageBox
-)
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QTextEdit, QProgressBar, QHBoxLayout, QMessageBox, QFileDialog
 from PyQt5.QtCore import Qt
 
 from src.video_processor import VideoProcessorThread
+from ui_helpers import create_button, create_label
+from snapshot_review_dialog import SnapshotReviewDialog
+
 
 class VideoView(QWidget):
     def __init__(self, main_window):
@@ -13,15 +13,14 @@ class VideoView(QWidget):
         self.main_window = main_window
         self.video_path = None
         self.worker = None
+        self.is_running = False
 
-        self.layout = QVBoxLayout()
+        self.layout = QVBoxLayout(self)
         self.setLayout(self.layout)
 
-        self.label = QLabel("🎥 Bird identification by video")
-        self.label.setAlignment(Qt.AlignCenter)
-
-        self.video_label = QLabel()
-        self.video_label.setAlignment(Qt.AlignCenter)
+        self.label = create_label("🎥 Bird identification by video", bold=True, size=16)
+        self.setGeometry(200, 200, 800, 600)
+        self.path_label = create_label("", center=True)
 
         self.log_output = QTextEdit()
         self.log_output.setReadOnly(True)
@@ -29,36 +28,45 @@ class VideoView(QWidget):
         self.progress_bar = QProgressBar()
         self.progress_bar.setValue(0)
 
-        self.select_button = QPushButton("📂 Select video")
-        self.analyse_button = QPushButton("🧠 analyse")
-        self.back_button = QPushButton("← Back")
+        self.feedback_widget = None
 
-        self.select_button.clicked.connect(self.select_video)
-        self.analyse_button.clicked.connect(self.analyse_video)
-        self.back_button.clicked.connect(self.go_back)
+        btn_layout = QHBoxLayout()
+        self.select_button = create_button("📂 Select video", self.select_video)
+        self.analyse_button = create_button("🧠 Analyse", self.analyse_video)
+        self.back_button = create_button("← Back", self.go_back)
 
-        button_layout = QHBoxLayout()
-        button_layout.addWidget(self.select_button)
-        button_layout.addWidget(self.analyse_button)
-        button_layout.addWidget(self.back_button)
+        btn_layout.addWidget(self.select_button)
+        btn_layout.addWidget(self.analyse_button)
+        btn_layout.addWidget(self.back_button)
 
         self.layout.addWidget(self.label)
-        self.layout.addWidget(self.video_label)
-        self.layout.addLayout(button_layout)
+        self.layout.addWidget(self.path_label)
+        self.layout.addLayout(btn_layout)
         self.layout.addWidget(self.progress_bar)
         self.layout.addWidget(self.log_output)
 
     def select_video(self):
         self.log_output.clear()
-        self.video_label.setText("")
+        self.path_label.setText("")
+        self.progress_bar.setValue(0)
+        self.analyse_button.setText("🧠 Analyse")
+        self.analyse_button.clicked.disconnect()
+        self.analyse_button.clicked.connect(self.analyse_video)
         file_path, _ = QFileDialog.getOpenFileName(self, "Select video", "", "Videos (*.mp4 *.avi *.mov)")
         if file_path:
             self.video_path = file_path
             filename = os.path.basename(file_path)
-            self.video_label.setText(f"Selected video: {filename}")
+            self.path_label.setText(f"Selected video: {filename}")
             self.log_output.setText("Video selected. Ready for analysis.")
 
     def analyse_video(self):
+        if self.is_running:
+            if self.worker:
+                self.worker.abort()
+                self.log_output.append("⏹️ Aborting analysis...")
+                self.analyse_button.setEnabled(False)  # Щоб не тицяли ще раз
+            return
+
         if not self.video_path:
             QMessageBox.warning(self, "No video selected", "Please select a video file before analysing.")
             return
@@ -67,8 +75,19 @@ class VideoView(QWidget):
         self.worker.log_signal.connect(self.append_log)
         self.worker.summary_signal.connect(self.display_summary)
         self.worker.progress_signal.connect(self.update_progress)
+        self.worker.finished.connect(self.analysis_finished)
         self.worker.start()
+
+        self.is_running = True
+        self.analyse_button.setText("⏹️ Stop")
         self.log_output.append("🔄 Starting analysis...")
+
+    def analysis_finished(self):
+        self.is_running = False
+        self.analyse_button.setText("🔍 Review snapshots")
+        self.analyse_button.clicked.disconnect()
+        self.analyse_button.clicked.connect(self.review_snapshots)
+        self.analyse_button.setEnabled(True)
 
     def append_log(self, text):
         self.log_output.append(text)
@@ -78,12 +97,39 @@ class VideoView(QWidget):
         for bird, count in summary.items():
             self.log_output.append(f"• {bird}: {count} appearance(s)")
 
+        self.review_snapshots()
+
+    def review_snapshots(self):
+        filename = os.path.splitext(os.path.basename(self.video_path))[0]
+        snapshot_dir = os.path.join("../dataset/observations/videos", filename)
+
+        if not os.path.exists(snapshot_dir):
+            self.log_output.append("⚠️ No snapshot directory found.")
+            return
+
+        files_to_review = [
+            f for f in os.listdir(snapshot_dir)
+            if f.lower().endswith((".png", ".jpg", ".jpeg")) and "_confirmed" not in f
+        ]
+
+        if not files_to_review:
+            QMessageBox.information(self, "No snapshots", "All snapshots have already been confirmed.")
+            return
+
+        dialog = SnapshotReviewDialog(snapshot_dir)
+        dialog.exec_()
+
     def update_progress(self, value):
         self.progress_bar.setValue(value)
 
     def go_back(self):
         self.video_path = None
-        self.video_label.setText("")
+        self.path_label.setText("")
         self.log_output.clear()
         self.progress_bar.setValue(0)
+
+        self.analyse_button.setText("🧠 Analyse")
+        self.analyse_button.clicked.disconnect()
+        self.analyse_button.clicked.connect(self.analyse_video)
+
         self.main_window.show_home()

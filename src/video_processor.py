@@ -16,6 +16,10 @@ class VideoProcessorThread(QThread):
     def __init__(self, video_path):
         super().__init__()
         self.video_path = video_path
+        self._abort = False
+
+    def abort(self):
+        self._abort = True
 
     def run(self):
         cap = cv2.VideoCapture(self.video_path)
@@ -25,7 +29,7 @@ class VideoProcessorThread(QThread):
 
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         filename = os.path.splitext(os.path.basename(self.video_path))[0]
-        output_dir = os.path.join("../gui/snapshots", filename)
+        output_dir = os.path.join("../dataset/observations/videos", filename)
         os.makedirs(output_dir, exist_ok=True)
 
         frame_interval = 5  # Аналізуємо кожен N-ий кадр
@@ -41,6 +45,10 @@ class VideoProcessorThread(QThread):
         last_seen_box = {}    # {class_name: (x1, y1, x2, y2)}
 
         while True:
+            if self._abort:
+                self.log_signal.emit("❌ Analysis aborted by user.")
+                break  # виходимо з циклу
+
             ret, frame = cap.read()
             if not ret:
                 break
@@ -72,7 +80,8 @@ class VideoProcessorThread(QThread):
                         intervals.append((frame_count, frame_count))
                         bird_appearances[predicted_class] = intervals
                         # Зберігаємо снапшот для нового інтервалу
-                        snapshot_name = f"{frame_count}_{predicted_class}.jpg"
+                        frame_id = f"{frame_count:04d}"
+                        snapshot_name = f"{frame_id}_{predicted_class}.jpg"
                         cv2.imwrite(os.path.join(output_dir, snapshot_name), bird_img)
                         self.log_signal.emit(f"[Frame {frame_count}] {predicted_class} appeared")
 

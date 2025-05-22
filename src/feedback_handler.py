@@ -4,12 +4,26 @@ import datetime
 import json
 
 
-def save_image(image, class_name, folder="../dataset/observations"):
-    now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    if class_name.lower() == "unknown":
-        folder = os.path.join(folder, "unknown")
+def save_image(image, class_name, context=None):
+    base_dir = "../dataset/observations"
+
+    if context and context.get("source") == "video":
+        video_name = context.get("video_name", "unknown_video")
+        frame_id_raw = context.get("frame_id", "0")
+        try:
+            frame_id = f"{int(frame_id_raw):04d}"  # форматування з ведучими нулями
+        except ValueError:
+            frame_id = frame_id_raw  # fallback, якщо frame_id не число
+
+        folder = os.path.join(base_dir, "video", video_name)
+        filename = f"{frame_id}_{class_name}_confirmed.jpg"
+
+    else:
+        now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        folder = os.path.join(base_dir, "image")
+        filename = f"{class_name}_{now}.jpg"
+
     os.makedirs(folder, exist_ok=True)
-    filename = f"{class_name}_{now}.jpg"
     path = os.path.join(folder, filename)
     cv2.imwrite(path, image)
     return path
@@ -26,12 +40,37 @@ def get_bird_classes():
         return ["blackbird", "blue_tit", "great_tit", "robin", "sparrow"]
 
 
-def handle_user_feedback(image, predicted_class, user_choice, corrected_class=None):
+def handle_user_feedback(image, predicted_class, user_choice, corrected_class=None, context=None):
     if user_choice == "yes":
-        return save_image(image, predicted_class)
+        class_name = predicted_class
     elif user_choice == "no" and corrected_class:
-        return save_image(image, corrected_class)
+        class_name = corrected_class
     elif user_choice == "unsure":
-        return save_image(image, "unknown")
-    return None
+        class_name = "unknown"
+    else:
+        return None
+
+    if context and context.get("source") == "video":
+        video_name = context["video_name"]
+        frame_id_raw = context["frame_id"]
+        try:
+            frame_id = f"{int(frame_id_raw):04d}"
+        except ValueError:
+            frame_id = frame_id_raw
+
+        base_folder = os.path.join("../dataset/observations/videos", video_name)
+        os.makedirs(base_folder, exist_ok=True)
+
+        for fname in os.listdir(base_folder):
+            if fname.startswith(f"{frame_id}_") and "_confirmed" not in fname:
+                os.remove(os.path.join(base_folder, fname))
+
+        new_filename = f"{frame_id}_{class_name}_confirmed.jpg"
+        new_path = os.path.join(base_folder, new_filename)
+
+        cv2.imwrite(new_path, image)
+        return new_path
+
+    return save_image(image, class_name, context)
+
 
