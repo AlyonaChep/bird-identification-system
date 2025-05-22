@@ -1,12 +1,16 @@
 import os
 import re
+import shutil
+from datetime import datetime
+
 from PyQt5.QtWidgets import (
     QWidget, QLabel, QScrollArea, QVBoxLayout, QGridLayout,
-    QFrame, QPushButton, QHBoxLayout, QSizePolicy, QComboBox
+    QFrame, QPushButton, QHBoxLayout, QSizePolicy, QComboBox, QMessageBox, QDialog
 )
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
 from ui_helpers import create_button, create_label
+from multi_edit_dialog import MultiEditDialog
 
 
 class ArchiveView(QWidget):
@@ -53,10 +57,19 @@ class ArchiveView(QWidget):
         self.load_observations()
 
     def extract_bird_name_and_datetime(self, filename):
-        name_part = filename.rsplit('_', 2)[0]
-        date_match = re.search(r'(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})', filename)
+        # Видаляємо розширення
+        name_without_ext = os.path.splitext(filename)[0]
+
+        # Виділяємо дату
+        date_match = re.search(r'(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})', name_without_ext)
         date_part = date_match.group(1) if date_match else "Unknown date"
-        bird_name = name_part.replace('_', ' ').title()
+
+        # Видаляємо дату та суфікс _confirmed з імені
+        name_cleaned = name_without_ext.replace('_confirmed', '')
+        name_cleaned = name_cleaned.replace(date_part, '')
+        name_cleaned = name_cleaned.rstrip('_')
+
+        bird_name = name_cleaned.replace('_', ' ').title()
         return bird_name, date_part
 
     def clear_grid(self):
@@ -96,10 +109,11 @@ class ArchiveView(QWidget):
                 image_label.setAlignment(Qt.AlignCenter)
                 layout.addWidget(image_label)
 
+            layout.addStretch()
             layout.addWidget(label)
             frame.setLayout(layout)
             frame.setFrameShape(QFrame.StyledPanel)
-            frame.setStyleSheet("padding: 5px;")
+            frame.setStyleSheet("padding: 0px;")
 
             frame.mousePressEvent = lambda event, f=frame, p=image_path: self.toggle_tile_selection(f, p)
 
@@ -111,12 +125,26 @@ class ArchiveView(QWidget):
                 col = 0
                 row += 1
 
+        image_files = []
         if selected_filter in ["All", "Images"] and os.path.exists(image_dir):
             for filename in os.listdir(image_dir):
                 if filename.lower().endswith(('.jpg', '.jpeg', '.png')):
-                    name, dt = self.extract_bird_name_and_datetime(filename)
                     full_path = os.path.join(image_dir, filename)
-                    add_tile(f"{name} — {dt}", full_path, tag=name)
+                    name, dt_str = self.extract_bird_name_and_datetime(filename)
+
+                    try:
+                        dt = datetime.strptime(dt_str, "%Y-%m-%d_%H-%M-%S")
+                    except Exception:
+                        dt = datetime.min  # если не удалось - ставим минимальное значение для сортировки вниз
+
+                    confirmed = "✅" if "_confirmed" in filename else ""
+                    display_text = f"{name} {confirmed}".strip()
+                    image_files.append((dt, display_text, full_path, name))
+
+        image_files.sort(key=lambda x: x[0], reverse=True)
+
+        for dt, display_text, full_path, name in image_files:
+            add_tile(f"{display_text}\n{dt.strftime('%Y-%m-%d %H:%M:%S')}", full_path, tag=name)
 
         if selected_filter in ["All", "Videos"] and os.path.exists(videos_dir):
             for video_folder in os.listdir(videos_dir):
@@ -128,8 +156,8 @@ class ArchiveView(QWidget):
                             frame_num = parts[0]
                             bird_name = '_'.join(parts[1:]).replace('.jpg', '').replace('_', ' ').title()
                             full_path = os.path.join(folder_path, filename)
-                            add_tile(f"{bird_name} (from video: {video_folder}, frame №{frame_num})", full_path,
-                                     tag=bird_name)
+                            display_text = f"{bird_name}\nfrom video: {video_folder}, frame №{frame_num}"
+                            add_tile(display_text, full_path, tag=bird_name)
 
     def group_by_class(self):
         # Sort tiles alphabetically by class name (tag)
@@ -145,12 +173,57 @@ class ArchiveView(QWidget):
 
     def toggle_multi_select_mode(self):
         self.multi_select_mode = not self.multi_select_mode
+
+        if self.multi_select_mode:
+            if not self.selected_tiles:
+                QMessageBox.information(self, "No selection", "Please select images to edit.")
+                self.multi_select_mode = False
+                return
+
+            dialog = MultiEditDialog(self)
+            if dialog.exec_() == QDialog.Accepted:
+                new_class = dialog.selected_class().replace(" ", "_").lower()
+
+                updated_files = 0
+                for path in list(self.selected_tiles):
+                    dir_name = os.path.dirname(path)
+                    filename = os.path.basename(path)
+                    ext = os.path.splitext(filename)[1]
+
+                    # ---- Визначаємо тип файлу ----
+                    if re.match(r"^\d+_", filename):  # починається з номера кадру
+                        # Відео кадр: 23_crow.jpg → 23_newclass_confirmed.jpg
+                        frame_num = filename.split('_')[0]
+                        new_filename = f"{frame_num}_{new_class}_confirmed{ext}"
+
+                    elif re.search(r'\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}', filename):
+                        # Фото з датою: sparrow_2024-05-20_15-30-00.jpg → newclass_2024-05-20_15-30-00_confirmed.jpg
+                        date_match = re.search(r'(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})', filename)
+                        datetime_part = date_match.group(1) if date_match else "unknown_time"
+                        new_filename = f"{new_class}_{datetime_part}_confirmed{ext}"
+
+                    else:
+                        # fallback
+                        new_filename = f"{new_class}_renamed{ext}"
+
+                    new_path = os.path.join(dir_name, new_filename)
+
+                    if not os.path.exists(new_path):
+                        shutil.move(path, new_path)
+                        updated_files += 1
+                    else:
+                        print(f"⚠️ File already exists: {new_path}")
+
+                QMessageBox.information(self, "Done", f"Renamed {updated_files} files to class '{new_class}'.")
+            else:
+                self.multi_select_mode = False
+
         self.load_observations()
 
     def toggle_tile_selection(self, frame, path):
         if path in self.selected_tiles:
-            frame.setStyleSheet("padding: 5px;")  # deselect
+            frame.setStyleSheet("padding: 0px;")  # deselect
             self.selected_tiles.remove(path)
         else:
-            frame.setStyleSheet("padding: 2px; border: 2px solid green;")
+            frame.setStyleSheet("padding: 0px; border: 1px solid green;")
             self.selected_tiles.add(path)
