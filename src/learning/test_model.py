@@ -1,8 +1,8 @@
-from tensorflow.keras.models import load_model
-from sklearn.metrics import confusion_matrix, classification_report
 import matplotlib.pyplot as plt
-import seaborn as sns
 import numpy as np
+import seaborn as sns
+from sklearn.metrics import confusion_matrix, classification_report
+from tensorflow.keras.models import load_model
 
 
 def evaluate_and_report(model_path, test_generator):

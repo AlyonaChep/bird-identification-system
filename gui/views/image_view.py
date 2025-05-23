@@ -1,14 +1,15 @@
 import os
-import cv2
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QMessageBox, QSizePolicy
-from PyQt5.QtGui import QPixmap, QImage
-from PyQt5.QtCore import Qt
 
-from src.bird_detector import detect_birds
-from src.frame_classifier import classify_bird
+import cv2
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPixmap, QImage
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QMessageBox, QSizePolicy
+
+from gui.ui_helpers import create_button, create_label
+from gui.widgets.feedback_widget import FeedbackWidget
+from src.core.bird_detector import detect_birds
+from src.core.frame_classifier import classify_bird
 from src.feedback_handler import handle_user_feedback
-from feedback_widget import FeedbackWidget
-from ui_helpers import create_button, create_label
 
 
 class ImageView(QWidget):

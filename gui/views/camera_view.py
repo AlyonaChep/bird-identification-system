@@ -1,10 +1,11 @@
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QPushButton, QTextEdit, QHBoxLayout, QMessageBox, QComboBox, QSizePolicy
 )
-from PyQt5.QtGui import QPixmap
-from PyQt5.QtCore import Qt
 from pygrabber.dshow_graph import FilterGraph
-from src.camera_processor import CameraProcessorThread
+
+from src.core.camera_processor import CameraProcessorThread
 
 
 class CameraView(QWidget):

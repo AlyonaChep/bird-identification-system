@@ -1,10 +1,12 @@
 import os
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QTextEdit, QProgressBar, QHBoxLayout, QMessageBox, QFileDialog
-from PyQt5.QtCore import Qt
+from pathlib import Path
 
-from src.video_processor import VideoProcessorThread
-from ui_helpers import create_button, create_label
-from snapshot_review_dialog import SnapshotReviewDialog
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QTextEdit, QProgressBar, QHBoxLayout, QMessageBox, QFileDialog
+
+from gui.ui_helpers import create_button, create_label
+from gui.widgets.snapshot_review_dialog import SnapshotReviewDialog
+from src.config import VIDEO_OBS_DIR
+from src.core.video_processor import VideoProcessorThread
 
 
 class VideoView(QWidget):
@@ -100,8 +102,8 @@ class VideoView(QWidget):
         self.review_snapshots()
 
     def review_snapshots(self):
-        filename = os.path.splitext(os.path.basename(self.video_path))[0]
-        snapshot_dir = os.path.join("../dataset/observations/videos", filename)
+        filename = Path(self.video_path).stem
+        snapshot_dir = VIDEO_OBS_DIR / filename
 
         if not os.path.exists(snapshot_dir):
             self.log_output.append("⚠️ No snapshot directory found.")

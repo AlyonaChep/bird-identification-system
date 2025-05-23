@@ -3,14 +3,16 @@ import re
 import shutil
 from datetime import datetime
 
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import (
     QWidget, QLabel, QScrollArea, QVBoxLayout, QGridLayout,
-    QFrame, QPushButton, QHBoxLayout, QSizePolicy, QComboBox, QMessageBox, QDialog
+    QFrame, QHBoxLayout, QComboBox, QMessageBox, QDialog
 )
-from PyQt5.QtGui import QPixmap
-from PyQt5.QtCore import Qt
-from ui_helpers import create_button, create_label
-from multi_edit_dialog import MultiEditDialog
+
+from gui.ui_helpers import create_button, create_label
+from gui.widgets.multi_edit_dialog import MultiEditDialog
+from src.config import VIDEO_OBS_DIR, IMAGES_OBS_DIR
 
 
 class ArchiveView(QWidget):
@@ -86,10 +88,9 @@ class ArchiveView(QWidget):
 
         selected_filter = self.filter_combo.currentText() if hasattr(self, "filter_combo") else "All"
 
-        base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'dataset', 'observations'))
-        self.path_label.setText(f"Observations folder: bird_identification_system/dataset/observations")
-        image_dir = os.path.join(base_path, 'image')
-        videos_dir = os.path.join(base_path, 'videos')
+        self.path_label.setText("Observations folder: bird_identification_system/dataset/observations")
+        image_dir = IMAGES_OBS_DIR
+        videos_dir = VIDEO_OBS_DIR
         row, col = 0, 0
 
         def add_tile(text, image_path, tag=None):
@@ -156,8 +157,21 @@ class ArchiveView(QWidget):
                             frame_num = parts[0]
                             bird_name = '_'.join(parts[1:]).replace('.jpg', '').replace('_', ' ').title()
                             full_path = os.path.join(folder_path, filename)
-                            display_text = f"{bird_name}\nfrom video: {video_folder}, frame №{frame_num}"
-                            add_tile(display_text, full_path, tag=bird_name)
+
+                            # Витягуємо дату з назви папки (остання частина — timestamp)
+                            try:
+                                timestamp_match = re.search(r'(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})$', video_folder)
+                                dt = datetime.strptime(timestamp_match.group(1),
+                                                       "%Y-%m-%d_%H-%M-%S") if timestamp_match else datetime.min
+                            except Exception:
+                                dt = datetime.min
+
+                            # Витягуємо назву відео (все до останнього підкреслення)
+                            video_base_name = video_folder.rsplit("_", 1)[0]
+
+                            # Відображення
+                            display_text = f"{bird_name}\n{dt.strftime('%Y-%m-%d %H:%M:%S')}\nfrom video: {video_base_name}, frame №{frame_num}"
+                            add_tile(display_text.strip(), full_path, tag=bird_name)
 
     def group_by_class(self):
         # Sort tiles alphabetically by class name (tag)
@@ -222,8 +236,8 @@ class ArchiveView(QWidget):
 
     def toggle_tile_selection(self, frame, path):
         if path in self.selected_tiles:
-            frame.setStyleSheet("padding: 0px;")  # deselect
+            frame.setStyleSheet("padding: 0px; background-color: none;")  # deselect
             self.selected_tiles.remove(path)
         else:
-            frame.setStyleSheet("padding: 0px; border: 1px solid green;")
+            frame.setStyleSheet("padding: 0px; background-color: #e0e0e0;")  # light gray for selection
             self.selected_tiles.add(path)

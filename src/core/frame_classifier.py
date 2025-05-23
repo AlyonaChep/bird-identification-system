@@ -1,13 +1,16 @@
-import cv2
 import json
+
+import cv2
 import numpy as np
 from tensorflow.keras.models import load_model
 
+from src.config import MODEL_PATH, BASE_DIR
+
 # Завантажуємо модель класифікації
-classification_model = load_model('../model/bird_identification_model.h5')
+classification_model = load_model(MODEL_PATH)
 
 # Завантажуємо мапу класів
-with open('../model/class_names.json') as f:
+with open(BASE_DIR / "model" / "class_names.json", encoding="utf-8") as f:
     index_to_class = json.load(f)
 
 

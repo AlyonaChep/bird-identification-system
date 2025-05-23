@@ -1,8 +1,10 @@
 from ultralytics import YOLO
-import cv2
 
-# Завантаження моделі (використовуємо найменшу для швидкості)
-model = YOLO('../model/yolov8n.pt')  # або 'yolov8s.pt' для більш точного
+from src.config import BASE_DIR
+
+# Завантаження моделі YOLO
+model = YOLO(BASE_DIR / "model" / "yolov8n.pt")
+
 
 def detect_birds(frame):
     results = model(frame, verbose=False)[0]

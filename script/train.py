@@ -1,5 +1,5 @@
-from src.data_preprocessing import create_data_generators
-from src.train_model import train_model
+from src.learning.data_preprocessing import create_data_generators
+from src.learning.train_model import train_model
 from src.config import MODEL_PATH
 
 if __name__ == '__main__':

@@ -1,10 +1,11 @@
-from PyQt5.QtWidgets import QDialog, QLabel, QVBoxLayout, QListWidget, QListWidgetItem, QHBoxLayout, QMessageBox
-from PyQt5.QtGui import QPixmap, QImage, QIcon
-from PyQt5.QtCore import QSize, Qt
 import os
-import cv2
 
-from feedback_widget import FeedbackWidget
+import cv2
+from PyQt5.QtCore import QSize, Qt
+from PyQt5.QtGui import QPixmap, QIcon
+from PyQt5.QtWidgets import QDialog, QLabel, QVBoxLayout, QListWidget, QListWidgetItem, QHBoxLayout
+
+from gui.widgets.feedback_widget import FeedbackWidget
 from src.feedback_handler import handle_user_feedback
 
 

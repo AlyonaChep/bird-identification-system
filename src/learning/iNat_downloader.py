@@ -1,6 +1,7 @@
-import requests
 import os
 import urllib.request
+
+import requests
 
 # Назва виду (можна також ID таксону)
 species_name = "Cyanistes caeruleus caeruleus"
@@ -15,6 +16,7 @@ num_images = 200
 
 os.makedirs(output_dir, exist_ok=True)
 
+
 def get_observations(species, per_page=30, page=1):
     url = f"https://api.inaturalist.org/v1/observations"
     params = {
@@ -26,6 +28,7 @@ def get_observations(species, per_page=30, page=1):
         "order_by": "created_at",
     }
     return requests.get(url, params=params).json()
+
 
 downloaded = 0
 page = 1

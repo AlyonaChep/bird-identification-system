@@ -1,9 +1,11 @@
-import cv2
 import time
+
+import cv2
 from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5.QtGui import QImage
-from src.bird_detector import detect_birds
-from src.frame_classifier import classify_bird
+
+from src.core.bird_detector import detect_birds
+from src.core.frame_classifier import classify_bird
 
 
 class CameraProcessorThread(QThread):

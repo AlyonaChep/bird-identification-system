@@ -1,11 +1,13 @@
 import os
+from datetime import datetime
+from pathlib import Path
+
 import cv2
-import json
-import numpy as np
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QTextEdit, QProgressBar
 from PyQt5.QtCore import QThread, pyqtSignal
-from src.bird_detector import detect_birds
-from src.frame_classifier import classify_bird
+
+from src.config import VIDEO_OBS_DIR
+from src.core.bird_detector import detect_birds
+from src.core.frame_classifier import classify_bird
 
 
 class VideoProcessorThread(QThread):
@@ -28,9 +30,11 @@ class VideoProcessorThread(QThread):
             return
 
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        filename = os.path.splitext(os.path.basename(self.video_path))[0]
-        output_dir = os.path.join("../dataset/observations/videos", filename)
-        os.makedirs(output_dir, exist_ok=True)
+        filename = Path(self.video_path).stem
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        folder_name = f"{filename}_{timestamp}"
+        output_dir = VIDEO_OBS_DIR / folder_name
+        output_dir.mkdir(parents=True, exist_ok=True)
 
         frame_interval = 5  # Аналізуємо кожен N-ий кадр
         MAX_GAP_FRAMES = 30  # Максимальна пауза для продовження "однієї появи"
@@ -42,7 +46,7 @@ class VideoProcessorThread(QThread):
 
         # Для збереження останніх кадрів та координат для кожного класу
         last_seen_frame = {}  # {class_name: last_seen_frame_number}
-        last_seen_box = {}    # {class_name: (x1, y1, x2, y2)}
+        last_seen_box = {}  # {class_name: (x1, y1, x2, y2)}
 
         while True:
             if self._abort:
@@ -106,4 +110,3 @@ class VideoProcessorThread(QThread):
         # Формуємо підсумковий звіт
         summary = {cls: len(intervals) for cls, intervals in bird_appearances.items()}
         self.summary_signal.emit(summary)
-

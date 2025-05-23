@@ -1,12 +1,15 @@
 import sys
+
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QStackedLayout, QVBoxLayout
 )
-from gui.home_view import HomeView
-from gui.image_view import ImageView
-from gui.video_view import VideoView
-from gui.camera_view import CameraView
-from gui.archive_view import ArchiveView
+
+from gui.views.archive_view import ArchiveView
+from gui.views.camera_view import CameraView
+from gui.views.home_view import HomeView
+from gui.views.image_view import ImageView
+from gui.views.video_view import VideoView
+
 
 class MainWindow(QWidget):
     def __init__(self):
