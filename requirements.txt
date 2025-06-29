@@ -1,0 +1,10 @@
+# GUI
+pygrabber==0.2
+PyQt5==5.15.11
+
+# CV | DL | ML
+numpy==1.24.4
+opencv-python==4.11.0.86
+scikit-learn==1.6.1
+tensorflow==2.10.1
+ultralytics==8.3.127
