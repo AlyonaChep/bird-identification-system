@@ -25,6 +25,7 @@ class VideoView(QWidget):
         self.path_label = create_label("", center=True)
 
         self.log_output = QTextEdit()
+        self.log_output.setStyleSheet("font-size: 16px;")
         self.log_output.setReadOnly(True)
 
         self.progress_bar = QProgressBar()
@@ -35,7 +36,7 @@ class VideoView(QWidget):
         btn_layout = QHBoxLayout()
         self.select_button = create_button("📂 Select video", self.select_video)
         self.analyse_button = create_button("🧠 Analyse", self.analyse_video)
-        self.back_button = create_button("← Back", self.go_back)
+        self.back_button = create_button("⬅️ Back", self.go_back)
 
         btn_layout.addWidget(self.select_button)
         btn_layout.addWidget(self.analyse_button)
@@ -78,11 +79,15 @@ class VideoView(QWidget):
         self.worker.summary_signal.connect(self.display_summary)
         self.worker.progress_signal.connect(self.update_progress)
         self.worker.finished.connect(self.analysis_finished)
+        self.worker.snapshot_dir_signal.connect(self.set_snapshot_dir)
         self.worker.start()
 
         self.is_running = True
         self.analyse_button.setText("⏹️ Stop")
         self.log_output.append("🔄 Starting analysis...")
+
+    def set_snapshot_dir(self, path):
+        self.last_snapshot_dir = Path(path)
 
     def analysis_finished(self):
         self.is_running = False
@@ -102,12 +107,11 @@ class VideoView(QWidget):
         self.review_snapshots()
 
     def review_snapshots(self):
-        filename = Path(self.video_path).stem
-        snapshot_dir = VIDEO_OBS_DIR / filename
-
-        if not os.path.exists(snapshot_dir):
-            self.log_output.append("⚠️ No snapshot directory found.")
+        if not hasattr(self, "last_snapshot_dir") or not self.last_snapshot_dir.exists():
+            self.log_output.append("⚠️ No recent snapshot directory found.")
             return
+
+        snapshot_dir = self.last_snapshot_dir
 
         files_to_review = [
             f for f in os.listdir(snapshot_dir)

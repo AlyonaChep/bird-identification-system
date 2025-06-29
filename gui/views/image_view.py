@@ -25,10 +25,9 @@ class ImageView(QWidget):
         self.setLayout(self.layout)
 
         self.label = create_label("📷 Bird identification by image", bold=True, size=16)
-        self.setGeometry(200, 200, 800, 600)
         self.path_label = create_label("", center=True)
         self.image_label = create_label("", center=True)
-        self.result_label = create_label("", bold=True, size=14)
+        self.result_label = create_label("", bold=True)
 
         self.image_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.image_label.setAlignment(Qt.AlignCenter)
@@ -36,7 +35,7 @@ class ImageView(QWidget):
         btn_layout = QHBoxLayout()
         self.select_button = create_button("🔍 Select an image", self.select_image)
         self.process_button = create_button("🧠 Identify", self.process_image)
-        self.back_button = create_button("← Back", self.go_back)
+        self.back_button = create_button("⬅️ Back", self.go_back)
 
         btn_layout.addWidget(self.select_button)
         btn_layout.addWidget(self.process_button)
@@ -69,7 +68,23 @@ class ImageView(QWidget):
         h, w, ch = rgb_image.shape
         qt_image = QImage(rgb_image.data, w, h, ch * w, QImage.Format_RGB888)
         pixmap = QPixmap.fromImage(qt_image)
-        self.image_label.setPixmap(pixmap.scaled(500, 500, Qt.KeepAspectRatio))
+
+        max_height = 350
+        if h > max_height:
+            # Обчислюємо пропорційно нову ширину, щоб зберегти співвідношення сторін
+            new_height = max_height
+            new_width = int(w * max_height / h)
+        else:
+            new_width = w
+            new_height = h
+
+        scaled_pixmap = pixmap.scaled(
+            new_width,
+            new_height,
+            Qt.KeepAspectRatio,
+            Qt.SmoothTransformation
+        )
+        self.image_label.setPixmap(scaled_pixmap)
 
     def process_image(self):
         if self.image is None:

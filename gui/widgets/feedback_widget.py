@@ -1,7 +1,8 @@
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QLabel, QHBoxLayout, QComboBox
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QComboBox
 
 from src.feedback_handler import get_bird_classes
+from gui.ui_helpers import create_button, create_label  # Імпорт хелперів
 
 
 class FeedbackWidget(QWidget):
@@ -12,14 +13,11 @@ class FeedbackWidget(QWidget):
         self.layout = QVBoxLayout(self)
         self.setLayout(self.layout)
 
-        self.layout.addWidget(QLabel("Is it correct?"))
-        self.yes_btn = QPushButton("✅ Yes")
-        self.no_btn = QPushButton("❌ No")
-        self.unsure_btn = QPushButton("❓ Not sure")
+        self.layout.addWidget(create_label("Is it correct?", bold=True, size=16))
 
-        self.yes_btn.clicked.connect(self.yes_clicked)
-        self.no_btn.clicked.connect(self.show_class_selector)
-        self.unsure_btn.clicked.connect(self.unsure_clicked)
+        self.yes_btn = create_button("✅ Yes", self.yes_clicked)
+        self.no_btn = create_button("❌ No", self.show_class_selector)
+        self.unsure_btn = create_button("❓ Not sure", self.unsure_clicked)
 
         self.layout.addWidget(self.yes_btn)
         self.layout.addWidget(self.no_btn)
@@ -42,9 +40,9 @@ class FeedbackWidget(QWidget):
         self.combo_layout = QHBoxLayout()
         self.class_selector = QComboBox()
         self.class_selector.addItems(get_bird_classes() + ["other"])
+        self.class_selector.setStyleSheet("font-size: 16px; padding: 4px;")
 
-        confirm_btn = QPushButton("Confirm")
-        confirm_btn.clicked.connect(self.send_corrected_class)
+        confirm_btn = create_button("Confirm", self.send_corrected_class, size=16)
 
         self.combo_layout.addWidget(self.class_selector)
         self.combo_layout.addWidget(confirm_btn)

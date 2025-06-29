@@ -32,9 +32,11 @@ class ArchiveView(QWidget):
         self.filter_combo = QComboBox()
         self.filter_combo.addItems(["All", "Images", "Videos"])
         self.filter_combo.currentTextChanged.connect(self.load_observations)
+        combo_style = "font-size: 16px; padding: 7px;"
+        self.filter_combo.setStyleSheet(combo_style)
 
         self.multi_select_button = create_button("🖼️ Multi-select edit", self.toggle_multi_select_mode)
-        self.back_button = create_button("← Back", self.main_window.show_home)
+        self.back_button = create_button("⬅️ Back", self.main_window.show_home)
 
         btn_layout.addWidget(self.filter_combo)
         btn_layout.addWidget(self.multi_select_button)
@@ -59,7 +61,7 @@ class ArchiveView(QWidget):
         self.load_observations()
 
     def extract_bird_name_and_datetime(self, filename):
-        # Видаляємо розширення
+        # Витягує назву птаха та дату/час із імені файлу на основі шаблону
         name_without_ext = os.path.splitext(filename)[0]
 
         # Виділяємо дату
@@ -75,6 +77,7 @@ class ArchiveView(QWidget):
         return bird_name, date_part
 
     def clear_grid(self):
+        # Очищає сітку зображень в архіві: видаляє всі віджети та обнуляє вибір
         while self.grid.count():
             item = self.grid.takeAt(0)
             widget = item.widget()
@@ -84,6 +87,8 @@ class ArchiveView(QWidget):
         self.selected_tiles.clear()
 
     def load_observations(self):
+        # Завантажує спостереження (зображення або відео) з відповідних директорій та
+        # відображає їх у вигляді плиток із можливістю фільтрації за типом
         self.clear_grid()
 
         selected_filter = self.filter_combo.currentText() if hasattr(self, "filter_combo") else "All"
@@ -174,7 +179,7 @@ class ArchiveView(QWidget):
                             add_tile(display_text.strip(), full_path, tag=bird_name)
 
     def group_by_class(self):
-        # Sort tiles alphabetically by class name (tag)
+        # Групує зображення у сітці за класами птахів (сортує за назвою)
         self.tiles.sort(key=lambda t: t[1])
         self.clear_grid()
         row, col = 0, 0
@@ -186,6 +191,7 @@ class ArchiveView(QWidget):
                 row += 1
 
     def toggle_multi_select_mode(self):
+        # Активує/деактивує режим мультивибору для групового редагування зображень
         self.multi_select_mode = not self.multi_select_mode
 
         if self.multi_select_mode:
@@ -235,6 +241,7 @@ class ArchiveView(QWidget):
         self.load_observations()
 
     def toggle_tile_selection(self, frame, path):
+        # Додає або прибирає зображення зі списку обраних при кліку мишею
         if path in self.selected_tiles:
             frame.setStyleSheet("padding: 0px; background-color: none;")  # deselect
             self.selected_tiles.remove(path)

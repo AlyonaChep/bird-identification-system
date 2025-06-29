@@ -7,13 +7,13 @@ from PyQt5.QtWidgets import QDialog, QLabel, QVBoxLayout, QListWidget, QListWidg
 
 from gui.widgets.feedback_widget import FeedbackWidget
 from src.feedback_handler import handle_user_feedback
+from gui.ui_helpers import create_label
 
 
 class SnapshotReviewDialog(QDialog):
     def __init__(self, snapshot_dir):
         super().__init__()
-        self.setWindowTitle("🖼️ Review Bird Snapshots")
-        self.resize(800, 600)
+        self.setWindowTitle("Review Bird Snapshots")
 
         self.snapshot_dir = snapshot_dir
         self.layout = QHBoxLayout(self)
@@ -24,9 +24,9 @@ class SnapshotReviewDialog(QDialog):
         self.layout.addWidget(self.image_list)
 
         self.right_panel = QVBoxLayout()
-        self.image_label = QLabel("Select an image to review")
+        self.image_label = create_label("Select an image to review", bold=True, size=16)
         self.image_label.setFixedSize(400, 300)
-        self.image_label.setScaledContents(True)
+        self.image_label.setScaledContents(False)
 
         self.feedback_widget = FeedbackWidget()
         self.feedback_widget.feedback_given.connect(self.process_feedback)

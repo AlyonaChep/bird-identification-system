@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import (
 from pygrabber.dshow_graph import FilterGraph
 
 from src.core.camera_processor import CameraProcessorThread
+from gui.ui_helpers import create_label, create_button
 
 
 class CameraView(QWidget):
@@ -13,7 +14,6 @@ class CameraView(QWidget):
         super().__init__()
         self.main_window = main_window
         self.setWindowTitle("📹 Live Bird Detection")
-        self.setGeometry(200, 200, 800, 600)
 
         self.camera_running = False
         graph = FilterGraph()
@@ -24,10 +24,10 @@ class CameraView(QWidget):
 
         self.worker = None
 
-        self.label = QLabel("📹 Real-time bird identification")
+        self.label = create_label("📹 Real-time bird identification", bold=True, size=16)
         self.label.setAlignment(Qt.AlignCenter)
 
-        self.image_label = QLabel("Camera not started")
+        self.image_label = create_label("Camera not started", bold=True, size=18)
         self.image_label.setAlignment(Qt.AlignCenter)
         self.image_label.setStyleSheet("border: 1px solid #ccc;")
         self.image_label.setScaledContents(False)
@@ -36,6 +36,7 @@ class CameraView(QWidget):
         self.image_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         self.log_output = QTextEdit()
+        self.log_output.setStyleSheet("font-size: 16px;")
         self.log_output.clear()
         self.log_output.setReadOnly(True)
         self.log_output.setPlaceholderText("Bird sightings will appear here...")
@@ -45,14 +46,20 @@ class CameraView(QWidget):
         self.camera_selector.setCurrentIndex(0)
         self.camera_selector.currentIndexChanged.connect(self.change_camera)
 
-        self.start_stop_button = QPushButton("▶️ Start")
-        self.back_button = QPushButton("← Back")
+        self.start_stop_button = create_button("▶️ Start", self.toggle_camera)
+        self.back_button = create_button("⬅️ Back", self.go_back)
 
-        self.start_stop_button.clicked.connect(self.toggle_camera)
-        self.back_button.clicked.connect(self.go_back)
+        button_style = "font-size: 16px; padding: 8px 16px;"
+        self.start_stop_button.setStyleSheet(button_style)
+        self.back_button.setStyleSheet(button_style)
+
+        combo_style = "font-size: 16px; padding: 7px;"
+        self.camera_selector.setStyleSheet(combo_style)
 
         top_layout = QHBoxLayout()
-        top_layout.addWidget(QLabel("Select Camera:"))
+        label_camera = QLabel("Select Camera:")
+        label_camera.setStyleSheet("font-size: 16px;")
+        top_layout.addWidget(label_camera)
         top_layout.addWidget(self.camera_selector)
         top_layout.addWidget(self.start_stop_button)
         top_layout.addWidget(self.back_button)
