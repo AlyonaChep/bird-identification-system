@@ -1,4 +1,6 @@
+
 # 🐦 Bird Identification System
+<img src="https://github.com/user-attachments/assets/939fd404-9e5d-4bbe-9be9-469a59ab1fd4" alt="bis-logo" width="300"/>
 
 ![Python](https://img.shields.io/badge/python-3.10-blue)
 ![PyQt5](https://img.shields.io/badge/PyQt5-5.15.11-brightgreen)
