@@ -15,7 +15,7 @@ class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Bird Identification System")
-        self.setGeometry(100, 100, 950, 700)
+        self.setGeometry(100, 100, 980, 700)
         self.setMinimumSize(980, 700)
 
         self.layout = QVBoxLayout()
