@@ -43,7 +43,8 @@ class CameraProcessorThread(QThread):
 
                 if not seen:
                     self.last_seen[predicted_class] = (current_time, (x1, y1))
-                    self.log_signal.emit(f"🕊️ {predicted_class} ({conf:.2f}) spotted")
+                    time_str = time.strftime("%H:%M:%S", time.localtime(current_time))
+                    self.log_signal.emit(f"🕊️ {predicted_class} ({conf:.2f}) spotted at {time_str}")
 
                 label = f"{predicted_class} ({conf:.2f})"
                 cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)

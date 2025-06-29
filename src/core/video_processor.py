@@ -14,6 +14,7 @@ class VideoProcessorThread(QThread):
     log_signal = pyqtSignal(str)
     summary_signal = pyqtSignal(dict)
     progress_signal = pyqtSignal(int)  # від 0 до 100
+    snapshot_dir_signal = pyqtSignal(str)
 
     def __init__(self, video_path):
         super().__init__()
@@ -35,6 +36,8 @@ class VideoProcessorThread(QThread):
         folder_name = f"{filename}_{timestamp}"
         output_dir = VIDEO_OBS_DIR / folder_name
         output_dir.mkdir(parents=True, exist_ok=True)
+
+        self.snapshot_dir_signal.emit(str(output_dir))
 
         frame_interval = 5  # Аналізуємо кожен N-ий кадр
         MAX_GAP_FRAMES = 30  # Максимальна пауза для продовження "однієї появи"
