@@ -1,5 +1,5 @@
-from src.learning.data_preprocessing import create_data_generators
 from src.config import MODEL_PATH
+from src.learning.data_preprocessing import create_data_generators
 from src.learning.test_model import evaluate_and_report
 
 if __name__ == '__main__':

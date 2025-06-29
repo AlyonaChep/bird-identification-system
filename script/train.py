@@ -1,6 +1,6 @@
+from src.config import MODEL_PATH
 from src.learning.data_preprocessing import create_data_generators
 from src.learning.train_model import train_model
-from src.config import MODEL_PATH
 
 if __name__ == '__main__':
     train_gen, val_gen, test_gen, class_names = create_data_generators()
